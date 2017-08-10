@@ -23,17 +23,20 @@ with open("final_project_dataset.pkl", "r") as data_file:
 
 print "total person: ", len(data_dict)
 count_poi = 0
-for name in data_dict:
 
+for name in data_dict:
     if data_dict[name]['poi'] == True:
         count_poi += 1
+
 
 print "number of poi:",count_poi
 
 ### Task 2: Remove outliers
 
 data_dict.pop('TOTAL')
-#data_dict.pop('LAY KENNETH L')
+data_dict.pop('THE TRAVEL AGENCY IN THE PARK')
+data_dict.pop('LOCKHART EUGENE E') # poi == false, the other features NaN
+
 
 ### Task 3: Create new feature(s)
 ### Store to my_dataset for easy export below.
@@ -99,6 +102,7 @@ nc = NearestCentroid()
 from sklearn.ensemble import RandomForestClassifier
 rfc = RandomForestClassifier()
 
+# try different clf 
 
 from sklearn.pipeline import Pipeline
 estimators = [('scaler', min_max_scaler),('SKB', skb),('reduce_dim', pca), ('clf', nc)]
@@ -110,13 +114,15 @@ pipeline = Pipeline(estimators)
 from sklearn.model_selection import GridSearchCV
 from sklearn.cross_validation import StratifiedShuffleSplit
 
-cv = StratifiedShuffleSplit(labels,n_iter=10, random_state = 42)
+cv = StratifiedShuffleSplit(labels, n_iter=10, random_state = 42)
 param_spaces = {
-    'SKB__k':[5,6,8,10],
-    'reduce_dim__n_components':[2,3,4,5]
+    'SKB__k':[5,8,10,12],
+    'reduce_dim__n_components':[2,3,4,5],
+# tune    NearestCentroid
+    'clf__metric': ['euclidean','manhattan']
 }
 
-gs = GridSearchCV(pipeline,param_grid = param_spaces, n_jobs = -1,cv = cv, scoring = 'f1',verbose=10)
+gs = GridSearchCV(pipeline,param_grid = param_spaces, n_jobs = -1,cv = cv, scoring = 'precision',verbose=10)
 gs.fit(features, labels)
 
 print gs.best_params_
